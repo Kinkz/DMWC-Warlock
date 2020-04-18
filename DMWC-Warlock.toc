@@ -1,7 +1,7 @@
 ## Interface: 11320
 ## Title: DoMeWhen Classic - Warlock
-## Author: Fisker
-## Notes: Warlock Rotation for DoMeWhen Classic
+## Author: Kink
+## Notes: Warlock Classic Rotation Addon
 ## DefaultState: Disabled
 ## Dependencies: DoMeWhen-Classic
 
