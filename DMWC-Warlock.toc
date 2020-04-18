@@ -1,7 +1,13 @@
 ## Interface: 11320
+<<<<<<< HEAD
 ## Title: DoMeWhen Classic - Warlock
 ## Author: Kink
 ## Notes: Warlock Classic Rotation Addon
+=======
+## Title: DMW Classic - Warlock
+## Author: Kink
+## Notes: Warlock Rotation for DoMeWhen Classic
+>>>>>>> 697043f39b9190b5fba4082c12c52244a6886d8c
 ## DefaultState: Disabled
 ## Dependencies: DoMeWhen-Classic
 
