@@ -1,7 +1,9 @@
 # DMWC-Warlock
 Kink's rendition of a Corrupted Vanilla Soul. 
 
-Work in progress, feel free to contribute as you see fit. 
+# Work in progress, feel free to contribute as you see fit. 
+
+![Settings Preview](https://i.imgur.com/oUQozWo.gif)
 
 Supports TOEP/ZHC on use trinkets. 
 Framework for dot tracker and corruption power for snapshotting, but may be easier to just refresh it on static timers, unless multi-dotting snapshotting is the goal. 
