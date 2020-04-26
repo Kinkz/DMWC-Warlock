@@ -132,7 +132,6 @@ local function CorruptionPower()
        end
     end
     
-    
     bonus = 1+crit/100
     tick_every = 3
     
@@ -144,6 +143,7 @@ local function CorruptionPower()
     dot_power = PowerRound(dps/100)/10
     return dot_power
 end
+
 function CombatLogEvent(...)
     if event == "PLAYER_REGEN_ENABLED" or event == "PLAYER_REGEN_DISABLED" then if #KinkyDots > 0 then KinkyDots = {} end end
 
@@ -233,7 +233,6 @@ function CombatLogEvent(...)
 		end
 	end
 end
-
 
 local PlayerDebuff = {
 --PlayerDebuff.Fear
@@ -471,6 +470,11 @@ local function Dot()
          --   debug("Corruption") 
         --    return true
        -- end
+       --[[ if Setting("Corruption") and Target and Target.ValidEnemy and Target.TTD > 5 
+        and Debuff.Corruption.Remain(Target) < Spell.Corruption.CastTime() + GCD and Spell.Corruption:Cast(Target) then 
+            debug("Corruption < Cast Time)")
+            return true
+        end--]]
         if Setting("Corruption") and (not Player.Moving or Talent.ImprovedCorruption.Rank == 5) and (not Spell.Corruption:LastCast() or (DMW.Player.LastCast[1].SuccessTime and (DMW.Time - DMW.Player.LastCast[1].SuccessTime) > 0.7) or not UnitIsUnit(Spell.Corruption.LastBotTarget, Target.Pointer)) and Target.CreatureType ~= "Totem" and (Target.Facing or (Talent.ImprovedCorruption.Rank == 5 and DMW.Settings.profile.Enemy.AutoFace)) and not Debuff.Corruption:Exist(Target) and Target.TTD > 7 and Spell.Corruption:Cast(Target) then
            debug("Corruption") 
            return true
@@ -530,7 +534,7 @@ local function OoC()
         -------------------------------------------------------------------------
         -------------------------------PET SUMMONS-------------------------------
         -------------------------------------------------------------------------
-        if Setting("Fel Domination") and (not Pet or Pet.Dead) and not Buff.DemonSac:Exist(Player) and ShardCount > 0 
+        if Setting("Fel Domination") and not Player.Moving and (not Pet or Pet.Dead) and not Buff.DemonSac:Exist(Player) and (ShardCount > 0 or not Pet and Setting("Imp When No Shards"))
         and Spell.FelDomination:Known() and Spell.FelDomination:IsReady() and Spell.FelDomination:Cast(Player) then 
            debug("Fel Domination")  
            return true
@@ -538,7 +542,7 @@ local function OoC()
         if Setting("Pet") ~= 1 and (not Player.Combat or Buff.FelDomination:Exist(Player)) then
             if (Spell.DemonicSac:Known() and not Buff.DemonSac:Exist(Player)) or not Spell.DemonicSac:Known() then
                if (not Pet or Pet.Dead) then
-                 if Setting("Imp When No Shards") and not Player.Moving and not Spell.SummonImp:LastCast() and Spell.SummonImp:Cast(Player) then
+                 if Setting("Imp When No Shards") and ShardCount < 1 and not Player.Moving and not Spell.SummonImp:LastCast() and Spell.SummonImp:Cast(Player) then
                     debug("[Summoning]| Imp - No Shards")
                     return true
                  end
@@ -556,7 +560,8 @@ local function OoC()
                      return true
                   end
                 else
-                    if Setting("Demonic Sacrifice") and not Setting("Imp When No Shards") and not Debuff.EnslaveDemon:Exist(Pet) and Spell.DemonicSac:Cast(Player) then
+                    if Setting("Demonic Sacrifice") and (not Setting("Imp When No Shards") or GetPetActionInfo(4) ~= GetSpellInfo(11763))
+                    and not Debuff.EnslaveDemon:Exist(Pet) and Spell.DemonicSac:Cast(Player) then
                         debug("Demonic Sacrifice")
                         return true
                     end
@@ -627,14 +632,27 @@ local function Raid_Rotation()
     end
     
     ------------------------------------------------
+    -- Shadow Bolt (Queue While Casting) -----------
+    ------------------------------------------------
+    if Setting("Shadow Bolt Mode") ~= 1 and not Setting("Searing Pain") and not Player.Moving and Target and Target.ValidEnemy and Target.TTD > Spell.ShadowBolt:CastTime() + GCD + 2
+    and Debuff.Corruption:Exist(Target) and Debuff.Corruption:Remain(Target) > Spell.ShadowBolt:CastTime() + GCD + 1.5 and ManaPct > Setting("Shadow Bolt Mana") 
+    and Spell.ShadowBolt:Cast(Target) then debug("Shadowbolt Always (Corruption > Cast Time)") return true end 
+
+    ------------------------------------------------
+    -- Searing Pain (Queue While Casting) ----------
+    ------------------------------------------------
+    if Setting("Searing Pain") and not Player.Moving and Target and Target.ValidEnemy and Target.TTD > Spell.SearingPain:CastTime() + GCD and Debuff.Corruption:Exist(Target) 
+    and Debuff.Corruption:Remain(Target) > Spell.SearingPain:CastTime() + GCD + 1.5 and Spell.SearingPain:Cast(Target) then debug("Searing Pain Always (Corruption > Cast Time)") return true end 
+
+    ------------------------------------------------
     -- Shadow Bolt (Shadow Trance) -----------------
     ------------------------------------------------
     if not Player.Casting then
   
      if Setting("Shadow Bolt Mode") ~= 1 and Buff.ShadowTrance:Exist(Player) and Buff.ShadowTrance:Remain(Player) < 2 and ManaPct > Setting("Shadow Bolt Mana") and Spell.ShadowBolt:Cast(Target) then
-            debug("Shadowbolt Shadow Trance") 
-            return true
-        end
+        debug("Shadowbolt Shadow Trance") 
+        return true
+     end
    
 
     ------------------------------------------------
@@ -643,7 +661,7 @@ local function Raid_Rotation()
 
     if not Player.Moving and not Target.Player and Setting("Drain Soul Snipe") and (not Setting("Stop DS At Max Shards") or ShardCount < Setting("Max Shards")) and (not Player.Casting or (Player.Casting ~= Spell.DrainSoul.SpellName and Player.Casting ~= Spell.Hellfire.SpellName and Player.Casting ~= Spell.RainOfFire.SpellName)) and Spell.DrainSoul:CD() < 0.2 and Debuff.Shadowburn:Count() == 0 then
         for _, Unit in ipairs(Enemy30Y) do
-            if Unit.Facing and math.abs(Player.Level - Unit.Level) <= 10 and not Unit.Player and (Unit.TTD < 2 or Unit.HP < 7) and not Unit:IsBoss() and not UnitIsTapDenied(Unit.Pointer) then
+            if Unit.Facing and math.abs(Player.Level - Unit.Level) <= 10 and not Unit.Player and (Unit.TTD < 2 or Unit.HP < 6) and not Unit:IsBoss() and not UnitIsTapDenied(Unit.Pointer) then
                 if Spell.DrainSoul:Cast(Unit) then
                     WandTime = DMW.Time
                     return true
@@ -661,18 +679,24 @@ local function Raid_Rotation()
     ------------------------------------------------
     --Multi-Dotting --------------------------------
     ------------------------------------------------
-
+  if Debuff.Corruption:Remain(Target) > GCD + 1.5 then 
     if MultiDot() then return true end
 
     ------------------------------------------------
+    --Life Tap (Waiting for Corruption) ------------
+    ------------------------------------------------
+    if Setting("Life Tap") and Target and Target.ValidEnemy and Target.TTD > 5 and Player.HP >= Setting("Life Tap HP") 
+    and (not Setting("Safe Life Tap") or (not Player:IsTanking() and not Debuff.LivingBomb:Exist(Player))) and ManaPct <= Setting("Life Tap Mana") 
+    and Debuff.Corruption:Remain(Target) < Spell.ShadowBolt:CastTime() + GCD + Spell.Corruption:CastTime() and Spell.LifeTap:Cast(Player) then debug("Life Tap (Waiting)")  return true end
+    
+    ------------------------------------------------
     --Life Tap -------------------------------------
     ------------------------------------------------
-
     if Setting("Life Tap") and Player.HP >= Setting("Life Tap HP") 
     and (not Setting("Safe Life Tap") or (not Player:IsTanking() and not Debuff.LivingBomb:Exist(Player))) 
     and ManaPct <= Setting("Life Tap Mana") and not Spell.DarkPact:LastCast() and Spell.LifeTap:Cast(Player) then debug("Life Tap")  return true end
-    --and Debuff.Corruption.Remains() > Spell.ShadowBolt:CastTime() + GCD + Spell.Corruption:CastTime()
-
+    --and Debuff.Corruption:Remain(Target) > Spell.ShadowBolt:CastTime() + GCD + Spell.Corruption:CastTime()
+  
     ------------------------------------------------
     --Shadow Bolt (Always) -------------------------
     ------------------------------------------------
@@ -704,6 +728,7 @@ local function Raid_Rotation()
         debug("Searing Pain") 
         return true
     end
+ end
  end
     --if DMW.Player.Equipment[18] and Target.Facing and Wand() then return true end
 end
