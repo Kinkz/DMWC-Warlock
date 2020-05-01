@@ -13,7 +13,6 @@ local BossEngaged = false
 local Trinket1 = GetInventoryItemID("player", 13)
 local Trinket2 = GetInventoryItemID("player", 14)
 
-
 if not KinkyDots then KinkyDots = {} end
 
 --Lucifron: Sacrifice Imp + equip branch
@@ -56,11 +55,22 @@ local function Locals()
     GCD = Player:GCD()
     Enemy20Y, Enemy20YC = Player:GetEnemies(20)
     Enemy30Y, Enemy30YC = Player:GetEnemies(30)
+    ShardCount = Shards(Setting("Max Shards"))
     dmgTrinkets = {
         18820, -- Talisman of Ephemeral Power
         19950, -- Zandalarian Hero Charm
         23046, --The Restrained Essence of Sapphiron
         11832 -- The Burst of Knowledge
+    }
+    dmgDebuff = {
+     15258, -- Shadow Vulnerability (priest)
+     17800, -- Shadow Vulnerability (Improved Shadow bolt)
+     23605, -- Nightfall
+     17938 -- Curse of Shadow
+    
+    }
+    dmgBuff = {
+
     }
     ManaPct = Player.PowerPct
     Curse = GetCurse()
@@ -109,7 +119,6 @@ local function CorruptionPower()
     -- Calculate potential damage buffs.
     dmg_buff = 1
     local pi = Buff.PowerInfusion:Exist(Player)
-    
     if pi then dmg_buff = dmg_buff * 1.05 end
        
     -- Shadow Mastery
@@ -117,9 +126,7 @@ local function CorruptionPower()
     dmg_buff = dmg_buff + (dmg_buff * SM_increase)
     
     -- Demonic Sacrifice (Succubus)
-    if Buff.DemonicSac:Exist(Player) then
-     dmg_buff = dmg_buff + (dmg_buff * .15)
-    end
+    if Buff.DemonicSac:Exist(Player) then dmg_buff = dmg_buff + (dmg_buff * .15) end
     
     -- Improved Shadow Bolt 
     if Target and ISB_rank then
@@ -446,22 +453,81 @@ local function Defensive()
 end
 
 local function CreateHealthstone()
-    if Spell.CreateHealthstoneMajor:Known() and ShardCount > 0 then
+    if Spell.CreateHealthstoneMajor:Known() then
         if not Spell.CreateHealthstoneMajor:LastCast() and not Item.MajorHealthstone:InBag() and Spell.CreateHealthstoneMajor:Cast(Player) then
+            return true
+        end
+    elseif Spell.CreateHealthstoneGreater:Known() then
+        if not Spell.CreateHealthstoneGreater:LastCast() and not Item.GreaterHealthstone:InBag() and Spell.CreateHealthstoneGreater:Cast(Player) then
+            return true
+        end
+    elseif Spell.CreateHealthstone:Known() then
+        if not Spell.CreateHealthstone:LastCast() and not Item.Healthstone:InBag() and Spell.CreateHealthstone:Cast(Player) then
+            return true
+        end
+    elseif Spell.CreateHealthstoneLesser:Known() then
+        if not Spell.CreateHealthstoneLesser:LastCast() and not Item.LesserHealthstone:InBag() and Spell.CreateHealthstoneLesser:Cast(Player) then
+            return true
+        end
+    elseif Spell.CreateHealthstoneMinor:Known() then
+        if not Spell.CreateHealthstoneMinor:LastCast() and not Item.MinorHealthstone:InBag() and Spell.CreateHealthstoneMinor:Cast(Player) then
             return true
         end
     end
 end
 
 local function CreateSoulstone()
-    if Spell.CreateSoulstoneMajor:Known() and ShardCount > 0 then
+    if Spell.CreateSoulstoneMajor:Known() then
         if not Spell.CreateSoulstoneMajor:LastCast() and not Item.MajorSoulstone:InBag() and Spell.CreateSoulstoneMajor:Cast(Player) then
+            return true
+        end
+    elseif Spell.CreateSoulstoneGreater:Known() then
+        if not Spell.CreateSoulstoneGreater:LastCast() and not Item.GreaterSoulstone:InBag() and Spell.CreateSoulstoneGreater:Cast(Player) then
+            return true
+        end
+    elseif Spell.CreateSoulstone:Known() then
+        if not Spell.CreateSoulstone:LastCast() and not Item.Soulstone:InBag() and Spell.CreateSoulstone:Cast(Player) then
+            return true
+        end
+    elseif Spell.CreateSoulstoneLesser:Known() then
+        if not Spell.CreateSoulstoneLesser:LastCast() and not Item.LesserSoulstone:InBag() and Spell.CreateSoulstoneLesser:Cast(Player) then
+            return true
+        end
+    elseif Spell.CreateSoulstoneMinor:Known() then
+        if not Spell.CreateSoulstoneMinor:LastCast() and not Item.MinorSoulstone:InBag() and Spell.CreateSoulstoneMinor:Cast(Player) then
             return true
         end
     end
 end
 
-local function Dot()
+local function Dot_Leveling()
+    if (Player.Level - Target.Level) > 30 and not Target:IsBoss() and Target.CreatureType ~= "Totem" and Setting("Corruption") then
+        if (not Player.Moving or Talent.ImprovedCorruption.Rank == 5) and (not Spell.Corruption:LastCast() or (DMW.Player.LastCast[1].SuccessTime and (DMW.Time - DMW.Player.LastCast[1].SuccessTime) > 0.7) or not UnitIsUnit(Spell.Corruption.LastBotTarget, Target.Pointer)) and (Target.Facing or (Talent.ImprovedCorruption.Rank == 5 and DMW.Settings.profile.Enemy.AutoFace)) and not Debuff.Corruption:Exist(Target) and Spell.Corruption:Cast(Target) then
+            return true
+        end
+        return true
+    end
+    if Setting("Siphon Life") and not Debuff.SiphonLife:Exist(Target) and Target.TTD > 10 and Target.CreatureType ~= "Totem" and Spell.SiphonLife:Cast(Target) then
+       return true
+    end
+    if Curse and Target.CreatureType ~= "Totem" and Target.TTD > 10 and not Debuff[Curse]:Exist(Target) then
+        if CDs and Target.TTD > 15 and Target.Distance <= Spell[Curse].MaxRange and Spell.AmplifyCurse:Cast(Player) then
+            return true
+        end
+        if Spell[Curse]:Cast(Target) then
+            return true
+        end
+    end
+    if Setting("Corruption") and (not Player.Moving or Talent.ImprovedCorruption.Rank == 5) and (not Spell.Corruption:LastCast() or (DMW.Player.LastCast[1].SuccessTime and (DMW.Time - DMW.Player.LastCast[1].SuccessTime) > 0.7) or not UnitIsUnit(Spell.Corruption.LastBotTarget, Target.Pointer)) and Target.CreatureType ~= "Totem" and (Target.Facing or (Talent.ImprovedCorruption.Rank == 5 and DMW.Settings.profile.Enemy.AutoFace)) and not Debuff.Corruption:Exist(Target) and Target.TTD > 7 and Spell.Corruption:Cast(Target) then
+       return true
+    end
+    if (Setting("Immolate") or Spell.ShadowBolt:CD() > 2) and not Player.Moving and (not Spell.Immolate:LastCast() or (DMW.Player.LastCast[1].SuccessTime and (DMW.Time - DMW.Player.LastCast[1].SuccessTime) > 0.7) or not UnitIsUnit(Spell.Immolate.LastBotTarget, Target.Pointer)) and Target.CreatureType ~= "Totem" and Target.Facing and not Debuff.Immolate:Exist(Target) and Target.TTD > 10 and Spell.Immolate:Cast(Target) then
+        return true
+    end
+end
+
+
+local function Dot_Raid()
     if Setting("Corruption")
     and (not Spell.Corruption:LastCast() or (DMW.Player.LastCast[1].SuccessTime and (DMW.Time - DMW.Player.LastCast[1].SuccessTime) > 0.7) 
     or not UnitIsUnit(Spell.Corruption.LastBotTarget, Target.Pointer)) and Target.CreatureType ~= "Totem" then    
@@ -484,6 +550,9 @@ local function Dot()
         --end
     end
     if Setting("Siphon Life") and not Debuff.SiphonLife:Exist(Target) and Target.TTD > 10 and Target.CreatureType ~= "Totem" and Spell.SiphonLife:Cast(Target) then
+        return true
+    end
+    if (Setting("Immolate") or Spell.ShadowBolt:CD() > 2) and not Player.Moving and (not Spell.Immolate:LastCast() or (DMW.Player.LastCast[1].SuccessTime and (DMW.Time - DMW.Player.LastCast[1].SuccessTime) > 0.7) or not UnitIsUnit(Spell.Immolate.LastBotTarget, Target.Pointer)) and Target.CreatureType ~= "Totem" and Target.Facing and not Debuff.Immolate:Exist(Target) and Target.TTD > 10 and Spell.Immolate:Cast(Target) then
         return true
     end
    -- if Setting("Corruption") and (not Player.Moving or Talent.ImprovedCorruption.Rank == 5) and (not Spell.Corruption:LastCast() or (DMW.Player.LastCast[1].SuccessTime and (DMW.Time - DMW.Player.LastCast[1].SuccessTime) > 0.7) or not UnitIsUnit(Spell.Corruption.LastBotTarget, Target.Pointer)) and Target.CreatureType ~= "Totem" and (Target.Facing or (Talent.ImprovedCorruption.Rank == 5 and DMW.Settings.profile.Enemy.AutoFace)) and not Debuff.Corruption:Exist(Target) and Target.TTD > 7 and Spell.Corruption:Cast(Target) then
@@ -522,14 +591,8 @@ local function MultiDot()
     end
 end
 
-local function Raid_AOE()
-
-end
-
 local function OoC()
    -- if not Player.Combat and #KinkyDots > 0 then KinkyDots = {} end
-
-    ShardCount = Shards(Setting("Max Shards"))
     if not Player.Casting then      
         -------------------------------------------------------------------------
         -------------------------------PET SUMMONS-------------------------------
@@ -567,14 +630,23 @@ local function OoC()
                     end
                end
          end
+
+        
+        if Setting("Auto Target Quest Units") then if Player:AutoTargetQuest(30, true) then return true end end
+
+        if Player.Combat and Setting("Auto Target") then if Player:AutoTarget(30, true) then return true end end  
     end
      
     if not Player.Combat then
-        if Setting("Auto Buff") and Spell.DemonArmor:Known() then if Buff.DemonArmor:Remain() < 300 and Spell.DemonArmor:Cast(Player) then debug("Buffing Demon Armor")  return true end end
+        if Spell.DemonArmor:Known() then 
+            if Setting("Auto Buff") and Buff.DemonArmor:Remain() < 300 and Spell.DemonArmor:Cast(Player) then debug("Buffing Demon Armor")  return true end
+        elseif Spell.DemonSkin:Known() then
+            if Setting("Auto Buff") and Buff.DemonSkin:Remain() < 300 and Spell.DemonSkin:Cast(Player) then debug("Buffing Demon Skin") return true end
+        end
             
-        if not Player.Moving and Setting("Create Healthstone") and CreateHealthstone() then debug("Creating Healthstone")  return true end
+        if not Player.Moving and Setting("Create Healthstone") and ShardCount > 0 and CreateHealthstone() then debug("Creating Healthstone")  return true end
             
-        if not Player.Moving and Setting("Create Soulstone") and CreateSoulstone() then debug("Creating Soulstone") return true end
+        if not Player.Moving and Setting("Create Soulstone") and ShardCount > 0 and CreateSoulstone() then debug("Creating Soulstone") return true end
             
         if Setting("Life Tap OOC") and Player.HP >= Setting("Life Tap HP") 
         and ManaPct <= Setting("Life Tap Mana") and Spell.LifeTap:Cast(Player) then debug("OOC Life Tap") return true end
@@ -582,7 +654,133 @@ local function OoC()
     end
 end
 
+------------------------------------------------
+--LEVELING/SOLO ROTATION -----------------------
+------------------------------------------------
+local function Leveling_Rotation()
+    if Player.Casting and Player.Casting == Spell.Fear.SpellName and NewTarget then
+        TargetUnit(NewTarget.Pointer)
+        DMW.Player.Target = NewTarget
+        NewTarget = false
+    end
 
+    if Defensive() then return true end
+
+    -- Rain of Fire
+    if Setting("Rain of FIre") and not Player.Moving and Target.Distance >= Setting("RoF Distance") and ManaPct >= Setting("RoF Mana") 
+    and Player.HP >= Setting("RoF HP") and select(2, Target:GetEnemies(10, Setting("RoF TTD"))) >= Setting("RoF Enemy Count") and Spell.RainOfFire:Cast(Target) then return true end
+
+    if not Player.Casting then
+        if Setting("Shadow Bolt Mode") ~= 1 and Buff.ShadowTrance:Exist(Player) and Buff.ShadowTrance:Remain(Player) < 2 and Player.PowerPct > Setting("Shadow Bolt Mana") and Spell.ShadowBolt:Cast(Target) then
+            return true
+        end
+        if Target.Player and (Target.Class == "PRIEST" or Target.Class == "WARLOCK") and Setting("Shadow Ward") and Spell.ShadowWard:Cast(Player) then
+            return true
+        end 
+        --Force refresh on fear
+        if Setting("Corruption") and Debuff.Fear:Exist(Target) and (Spell.Fear:LastCast() or Spell.Fear:LastCast(2)) and Debuff.Corruption:Remain(Target) < Target.TTD and (not Player.Moving or Talent.ImprovedCorruption.Rank == 5) and Spell.Corruption:Cast(Target) then
+            return true
+        end
+    end
+    if not Player.Moving and not Target.Player and Setting("Drain Soul Snipe") and (not Setting("Stop DS At Max Shards") or ShardCount < Setting("Max Shards")) and (not Player.Casting or (Player.Casting ~= Spell.DrainSoul.SpellName and Player.Casting ~= Spell.Hellfire.SpellName and Player.Casting ~= Spell.RainOfFire.SpellName)) and Spell.DrainSoul:CD() < 0.2 and Debuff.Shadowburn:Count() == 0 then
+        for _, Unit in ipairs(Enemy30Y) do
+            if Unit.Facing and math.abs(Player.Level - Unit.Level) <= 10 and not Unit.Player and (Unit.TTD < 3 or Unit.HP < 8) and not Unit:IsBoss() and not UnitIsTapDenied(Unit.Pointer) then
+                if Spell.DrainSoul:Cast(Unit) then
+                    WandTime = DMW.Time
+                    return true
+                end
+            end
+        end
+    end
+    if Setting("Shadowburn") and ShardCount >= Setting("Max Shards") and (not Player.Casting or (Player.Casting ~= Spell.DrainSoul.SpellName and Player.Casting ~= Spell.Hellfire.SpellName and Player.Casting ~= Spell.RainOfFire.SpellName)) and Spell.Shadowburn:IsReady() then
+        for _, Unit in ipairs(Enemy30Y) do
+            if Unit.Facing and (Unit.TTD < Setting("Shadowburn TTD") or Unit.HP < Setting("Shadowburn HP")) and not Unit:IsBoss() and not UnitIsTapDenied(Unit.Pointer) then
+                if Player.Casting then
+                    SpellStopCasting()
+                end
+                if Spell.Shadowburn:Cast(Unit) then
+                    return true
+                end
+            end
+        end
+    end
+    if not Player.Casting then
+        if not Player.Moving and Setting("Fear Bonus Mobs") and Spell.Fear:IsReady() and Debuff.Fear:Count() == 0 and (not Spell.Fear:LastCast() or (DMW.Player.LastCast[1].SuccessTime and (DMW.Time - DMW.Player.LastCast[1].SuccessTime) > 0.7)) then
+            local CreatureType = Target.CreatureType
+            if Enemy20YC > 1 and not Player.InGroup and not (CreatureType == "Undead" or CreatureType == "Mechanical" or CreatureType == "Totem") and Target.TTD > 3 and not Target:IsBoss() and
+            (not Setting("Immolate") or not Spell.Immolate:Known() or Debuff.Immolate:Exist(Target) or Target.TTD < 10) and 
+            (not Setting("Corruption") or not Spell.Corruption:Known() or Debuff.Corruption:Exist(Target) or Target.TTD < 7) and
+            (not Setting("Siphon Life") or not Spell.SiphonLife:Known() or Debuff.SiphonLife:Exist(Target) or Target.TTD < 10) and 
+            (not Curse or not Spell[Curse]:Known() or Debuff[Curse]:Exist(Target) or Target.TTD < 10 ) then                    
+                for i, Unit in ipairs(Enemy20Y) do
+                    if i > 1 and Unit.TTD > 3 and Spell.Fear:Cast(Target) then
+                        NewTarget = Unit
+                        return true
+                    end
+                end
+            end
+        end
+        if Setting("Auto Pet Attack") and Pet and not Pet.Dead and not UnitIsUnit(Target.Pointer, "pettarget") and DMW.Time > (PetAttackTime + 1) then
+            PetAttackTime = DMW.Time
+            PetAttack()
+        end
+        if (not DMW.Player.Equipment[18] or (Target.Distance <= 1 and Setting("Auto Attack In Melee"))) and not IsCurrentSpell(Spell.Attack.SpellID) then
+            StartAttack()
+        end
+
+        if Dot_Leveling() then return true end
+
+        if MultiDot() then return true end
+
+        if Setting("Life Tap") and Player.HP >= Setting("Life Tap HP") and (not Setting("Safe Life Tap") or (not Player:IsTanking() and not Debuff.LivingBomb:Exist(Player))) and Player.PowerPct <= Setting("Life Tap Mana") and not Spell.DarkPact:LastCast() and Spell.LifeTap:Cast(Player) then
+            return true
+        end
+        if Pet and not Pet.Dead and Setting("Dark Pact") and Player.PowerPct <= Setting("Dark Pact Mana") and Pet:PowerPct() > Setting("Dark Pact Pet Mana") and not Spell.DarkPact:LastCast() and not Spell.LifeTap:LastCast() and Spell.DarkPact:Cast(Pet) then
+            return true
+        end
+        if Setting("Fear Solo Farming") and not Player.Moving and Target.TTD > 3 and #DMW.Friends.Units < 2 and not (Target.CreatureType == "Undead" or Target.CreatureType == "Mechanical" or Target.CreatureType == "Totem") and (Setting("Shadow Bolt Mode") ~= 2 or Player.PowerPct < Setting("Shadow Bolt Mana") or Spell.ShadowBolt:LastCast() or (Spell.ShadowBolt:LastCast(2) and (Spell.LifeTap:LastCast() or Spell.DarkPact:LastCast()))) and Debuff.Fear:Count() == 0 and (not Spell.Fear:LastCast() or (DMW.Player.LastCast[1].SuccessTime and (DMW.Time - DMW.Player.LastCast[1].SuccessTime) > 0.7)) and Spell.Fear:Cast(Target) then 
+            return true
+        end
+        if Setting("Shadow Bolt Mode") == 2 and Target.Facing and (not Player.Moving or Buff.ShadowTrance:Exist(Player)) and Player.PowerPct > Setting("Shadow Bolt Mana") and (Target.TTD > Spell.ShadowBolt:CastTime() or (Target.Distance > 5 and not DMW.Player.Equipment[18])) and Spell.ShadowBolt:Cast(Target) then
+            return true
+        end
+        if Setting("Shadow Bolt Mode") == 3 and Target.Facing and Player.PowerPct > Setting("Shadow Bolt Mana") and Buff.ShadowTrance:Exist(Player) and Spell.ShadowBolt:Cast(Target) then
+            return true
+        end
+        if Setting("Searing Pain") and Target.Facing and not Player.Moving and (Setting("Shadow Bolt Mode") ~= 2 or Spell.ShadowBolt:CD() > 2 or Target.TTD < Spell.ShadowBolt:CastTime()) and Spell.SearingPain:Cast(Target) then
+            return true
+        end
+        if Setting("Drain Life Filler") and not Player.Moving and Player.HP <= Setting("Drain Life Filler HP") and Target.CreatureType ~= "Mechanical" and (Target.Player or Target.TTD > 3) and Spell.DrainLife:Cast(Target) then
+            return true
+        end
+        if Setting("Wand") and DMW.Player.Equipment[18] and Target.Facing and Wand() then return true end
+    end
+end
+
+------------------------------------------------
+--RAID BURST ROTATION --------------------------
+------------------------------------------------
+local function Raid_BurstRotation()
+    if Setting("Use Trinket") ~= 1 and equippedCheck(dmgTrinkets) >= 1 and not Player.Casting and CDs and Target and Target.ValidEnemy and Target.TTD > 10 then
+        if Setting("Use Trinket") == 2 and ManaPct >= Setting("Trinket Mana %")
+        and GetItemCount(18820) >= 1 and GetItemCooldown(18820) == 0  then 
+         debug("Using TOEP") 
+            name = GetItemInfo(18820)
+            RunMacroText("/use " .. name)
+            return true
+        elseif Setting("Use Trinket") == 3 and ManaPct >= Setting("Trinket Mana %") and GetItemCount(19950) >= 1 and GetItemCooldown(19950) == 0  then 
+         debug("Using ZHC") 
+            name = GetItemInfo(19950)
+            RunMacroText("/use " .. name)
+            return true
+        end
+    end
+end
+
+
+------------------------------------------------
+--RAID ROTATION --------------------------------
+------------------------------------------------
 local function Raid_Rotation()
     if Utility() then return true end
     if Defensive() then return true end
@@ -602,14 +800,9 @@ local function Raid_Rotation()
     ------------------------------------------------
     --Curse ----------------------------------------
     ------------------------------------------------
-
     if Curse and Target.CreatureType ~= "Totem" and Target.TTD > 10 and not Debuff[Curse]:Exist(Target) then
-        if CDs and Target.TTD > 15 and Target.Distance <= Spell[Curse].MaxRange and Spell.AmplifyCurse:Cast(Player) then
-            return true
-        end
-        if Spell[Curse]:Cast(Target) then
-            return true
-        end
+        if CDs and Target.TTD > 15 and Target.Distance <= Spell[Curse].MaxRange and Spell.AmplifyCurse:Cast(Player) then return true end
+        if Spell[Curse]:Cast(Target) then return true end
     end
 
     ------------------------------------------------
@@ -634,15 +827,34 @@ local function Raid_Rotation()
     ------------------------------------------------
     -- Shadow Bolt (Queue While Casting) -----------
     ------------------------------------------------
-    if Setting("Shadow Bolt Mode") ~= 1 and not Setting("Searing Pain") and not Player.Moving and Target and Target.ValidEnemy and Target.TTD > Spell.ShadowBolt:CastTime() + GCD + 2
-    and Debuff.Corruption:Exist(Target) and Debuff.Corruption:Remain(Target) > Spell.ShadowBolt:CastTime() + GCD + 1.5 and ManaPct > Setting("Shadow Bolt Mana") 
-    and Spell.ShadowBolt:Cast(Target) then debug("Shadowbolt Always (Corruption > Cast Time)") return true end 
+    if Target and Target.ValidEnemy and Target.TTD > Spell.ShadowBolt:CastTime() + GCD then 
+       ------------------------------------------------
+       -- Shadow Bolt (Queue While Casting) -----------
+       ------------------------------------------------
+       if Setting("Shadow Bolt Mode") ~= 1 and not Setting("Searing Pain") and not Player.Moving and Target and Target.ValidEnemy and Target.TTD > Spell.ShadowBolt:CastTime() + GCD + 2
+       and Debuff.Corruption:Exist(Target) and Debuff.Corruption:Remain(Target) > Spell.ShadowBolt:CastTime() + GCD + 1.5 and ManaPct > Setting("Shadow Bolt Mana") 
+       and Spell.ShadowBolt:Cast(Target) then debug("Shadowbolt Always (Corruption > Cast Time)") return true end 
+
+       ------------------------------------------------
+       -- Searing Pain (Queue While Casting) ----------
+       ------------------------------------------------
+       if Setting("Searing Pain") and not Player.Moving and Target and Target.ValidEnemy and Target.TTD > Spell.SearingPain:CastTime() + GCD and Debuff.Corruption:Exist(Target) 
+       and Debuff.Corruption:Remain(Target) > Spell.SearingPain:CastTime() + GCD + 1.5 and Spell.SearingPain:Cast(Target) then debug("Searing Pain Always (Corruption > Cast Time)") return true end 
+
+    else
+        if Setting("Searing Pain") and not FireImmuneBoss()
+        and Target.Facing and not Player.Moving and (Setting("Shadow Bolt Mode") ~= 2 
+        or Spell.ShadowBolt:CD() > 2 or Target.TTD < Spell.ShadowBolt:CastTime()) and Spell.SearingPain:Cast(Target) then
+            debug("Searing Pain") 
+            return true
+        end
+    end
 
     ------------------------------------------------
     -- Searing Pain (Queue While Casting) ----------
     ------------------------------------------------
-    if Setting("Searing Pain") and not Player.Moving and Target and Target.ValidEnemy and Target.TTD > Spell.SearingPain:CastTime() + GCD and Debuff.Corruption:Exist(Target) 
-    and Debuff.Corruption:Remain(Target) > Spell.SearingPain:CastTime() + GCD + 1.5 and Spell.SearingPain:Cast(Target) then debug("Searing Pain Always (Corruption > Cast Time)") return true end 
+    --[[if Setting("Searing Pain") and not Player.Moving and Target and Target.ValidEnemy and Target.TTD > Spell.SearingPain:CastTime() + GCD and Debuff.Corruption:Exist(Target) 
+    and Debuff.Corruption:Remain(Target) > Spell.SearingPain:CastTime() + GCD + 1.5 and Spell.SearingPain:Cast(Target) then debug("Searing Pain Always (Corruption > Cast Time)") return true end --]]
 
     ------------------------------------------------
     -- Shadow Bolt (Shadow Trance) -----------------
@@ -674,12 +886,11 @@ local function Raid_Rotation()
     --Target Dotting -------------------------------
     ------------------------------------------------
 
-    if Dot() then return true end  
+    if Dot_Raid() then return true end  
 
     ------------------------------------------------
     --Multi-Dotting --------------------------------
     ------------------------------------------------
-  if Debuff.Corruption:Remain(Target) > GCD + 1.5 then 
     if MultiDot() then return true end
 
     ------------------------------------------------
@@ -713,22 +924,24 @@ local function Raid_Rotation()
     ------------------------------------------------
     --Shadowburn Modifiers -------------------------
     ------------------------------------------------
-    --[[if Setting("Shadowburn") and ShardCount >= Setting("Max Shards") and (not Player.Casting or (Player.Casting ~= Spell.DrainSoul.SpellName 
-    and Player.Casting ~= Spell.Hellfire.SpellName and Player.Casting ~= Spell.RainOfFire.SpellName)) and Spell.Shadowburn:IsReady() then
-        
+    if Setting("Shadowburn") and ShardCount >= Setting("Max Shards") and (not Player.Casting or (Player.Casting ~= Spell.DrainSoul.SpellName 
+    and Player.Casting ~= Spell.Hellfire.SpellName and Player.Casting ~= Spell.RainOfFire.SpellName)) and Spell.Shadowburn:IsReady() and not Debuff.Shadowburn:Exist(Target) then      
+        -- Shadowburn (Power Infusion)
+        if Buff.PowerInfusion:Exist(Player) then Spell.Shadowburn:Cast(Unit) return true end
+        -- Shadowburn (Damage Modifiers)
+        --[[if Setting("Shadowburn Modifiers") ~= 1 then
+           if Setting("Shadowburn Modifiers") == 2 then
+              for i = 1, unitdebuffs do 
+                Name = UnitDebuff(Target, i)
+              
+                
 
+              end
+            end
 
-
-       if Spell.Shadowburn:Cast(Unit) then return true end
-    end--]]
-    
-    if Setting("Searing Pain") and not FireImmuneBoss()
-    and Target.Facing and not Player.Moving and (Setting("Shadow Bolt Mode") ~= 2 
-    or Spell.ShadowBolt:CD() > 2 or Target.TTD < Spell.ShadowBolt:CastTime()) and Spell.SearingPain:Cast(Target) then
-        debug("Searing Pain") 
-        return true
+        end--]]
+       --if Spell.Shadowburn:Cast(Unit) then return true end
     end
- end
  end
     --if DMW.Player.Equipment[18] and Target.Facing and Wand() then return true end
 end
@@ -737,7 +950,16 @@ function Warlock.Rotation()
     Locals()
     OoC()
     if Target and Target.ValidEnemy and Target.Distance < 40 then
-        if Setting("Rotation") == 1 then Raid_Rotation() end
+        if Setting("Rotation") ~= 1 then 
+            if Setting("Rotation") == 1 then 
+                Raid_Rotation()
+                return true 
+            elseif Setting("Rotation") == 3 then 
+                Leveling_Rotation()
+                return true 
+            end
+           
+        end
     end
 end
 
