@@ -15,6 +15,24 @@ local Trinket2 = GetInventoryItemID("player", 14)
 
 if not KinkyDots then KinkyDots = {} end
 
+local function Shards(Max)
+    local Count = 0
+    for Bag = 0, 4, 1 do
+        for Slot = 1, GetContainerNumSlots(Bag), 1 do
+            local ItemID = GetContainerItemID(Bag, Slot)
+            if ItemID and ItemID == 6265 then
+                if Count >= Max then
+                    PickupContainerItem(Bag, Slot)
+                    DeleteCursorItem()
+                else
+                    Count = Count + 1
+                end
+            end
+        end
+    end
+    return Count
+end
+
 --Lucifron: Sacrifice Imp + equip branch
 local function GetCurse()
     local CurseSetting = Setting("Curse")
@@ -77,23 +95,6 @@ local function Locals()
 end
 local function debug(message)
     if Setting("Debug") then print(tostring(message)) end
-end
-local function Shards(Max)
-    local Count = 0
-    for Bag = 0, 4, 1 do
-        for Slot = 1, GetContainerNumSlots(Bag), 1 do
-            local ItemID = GetContainerItemID(Bag, Slot)
-            if ItemID and ItemID == 6265 then
-                if Count >= Max then
-                    PickupContainerItem(Bag, Slot)
-                    DeleteCursorItem()
-                else
-                    Count = Count + 1
-                end
-            end
-        end
-    end
-    return Count
 end
 --https://classic.wowhead.com/spell=6346/fear-ward
 
