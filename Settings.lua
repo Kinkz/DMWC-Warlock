@@ -35,8 +35,13 @@ function Warlock.Settings()
     UI.AddRange("Life Tap Mana", "Mana pct to use Life Tap", 0, 100, 1, 15)
     UI.AddRange("Life Tap HP", "Minimum player hp to use Life Tap", 0, 100, 1, 45)
     UI.AddToggle("Safe Life Tap", "Do not Life Tap if you have aggro", false, true)
+   UI.AddBlank()
+    UI.AddToggle("Stop DS At Max Shards", "Stop using Drain Soul when max shards reached", false)
+    UI.AddToggle("Auto Delete Shards", "Activate automatic deletion of shards from bags, set max below", false)
+    UI.AddRange("Max Shards", "Control max number of shards in bag", 0, 30, 1, 4)
     UI.AddToggle("Debug", "Enable printing of spells casting in chat for debug reasons. ", false)
-
+    
+    
  UI.AddHeader("Warlock .:|:. Pet ")   
     UI.AddDropdown("Pet", nil, {"Disabled", "Succubus", "Voidwalker", "Imp", "Felhunter"}, 1, true)
     UI.AddToggle("Imp When No Shards", "Summon Imp when you are out of soul shards.", true, 1) 
