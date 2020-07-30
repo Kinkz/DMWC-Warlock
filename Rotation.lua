@@ -48,6 +48,24 @@ local dmgDebuff = {
     17937 -- Curse of Shadow
    }
 
+local function Shards(Max)
+    local Count = 0
+    for Bag = 0, 4, 1 do
+        for Slot = 1, GetContainerNumSlots(Bag), 1 do
+            local ItemID = GetContainerItemID(Bag, Slot)
+            if ItemID and ItemID == 6265 then
+                if Count >= Max then
+                    PickupContainerItem(Bag, Slot)
+                    DeleteCursorItem()
+                else
+                    Count = Count + 1
+                end
+            end
+        end
+    end
+    return Count
+end
+
 --Lucifron: Sacrifice Imp + equip branch
 local function GetCurse()
     local CurseSetting = Setting("Curse")
@@ -1355,3 +1373,11 @@ end)
 --keyboardFrame:EnableKeyboard(true)
 
 kinkFrame:Show()
+	CombatLogEvent(CombatLogGetCurrentEventInfo());
+	if(event == "PLAYER_ENTERING_WORLD") then
+		C_ChatInfo.RegisterAddonMessagePrefix("D4C") -- DBM
+	elseif(event == "ENCOUNTER_START") then
+		ENCOUNTER_START(encounterID, name, difficulty, size)
+	elseif(event == "ENCOUNTER_END") then
+		ENCOUNTER_END(encounterID, name, difficulty, size)
+	end
