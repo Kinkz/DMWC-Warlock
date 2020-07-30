@@ -2,8 +2,6 @@
 Kink's rendition of a Corrupted Vanilla Soul. 
 
 # Release version v0.1.0 [7/30/2020):
-# Latest Changes:
-- Pause HUD modifier key toggle.
 # Supported DMG Trinkets:
 - Talisman of Ephemeral Power
 - Zandalarian Hero Charm
@@ -12,7 +10,8 @@ Kink's rendition of a Corrupted Vanilla Soul.
 - Eye of Moam
 - Draconic Infused Emblem
 - Mar'li's Eye
-
+# Latest Changes:
+- Pause HUD modifier key toggle.
 - Added Swiftness/Major Rejuvenation Potion, Night Dragon's Breath support.
 - Added Will of The Forsaken support. 
 - Base raid rotation, curse/multi-dotting support.
