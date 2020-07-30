@@ -1,7 +1,7 @@
 ## Interface: 11320
-## Title: DoMeWhen Classic - Warlock
+## Title: Kink's End Game Raiding Rotation
 ## Author: Kink
-## Notes: Warlock Classic Rotation Addon
+## Notes: Kink's Warlock Classic Rotation
 ## Title: DMW Classic - Warlock
 ## Author: Kink
 ## Notes: Warlock Rotation for DoMeWhen Classic
