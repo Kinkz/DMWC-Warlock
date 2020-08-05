@@ -1024,7 +1024,7 @@ local function Raid_Rotation()
         debug("Refreshing Corruption, Corruption Power > Corruption's power in tracker")
         if Spell.Corruption:Cast(Target) then return true end
     end--]]
-    for i=1,#kinkydots do
+   --[[] for i=1,#kinkydots do
         if kinkydots[i].guid == id then
             if DMW.Player.Buffs.EphemeralPower:Exist(Player) then
                 if CorruptionPower() > kinkydots[i].corPower or DMW.Player.Buffs.EphemeralPower:Remain(Player) < 5.0 then
@@ -1033,7 +1033,7 @@ local function Raid_Rotation()
                 end
             end
         end
-    end
+    end--]]
 
 
     ------------------------------------------------
@@ -1098,7 +1098,7 @@ local function Raid_Rotation()
         if Buff.PowerInfusion:Exist(Player) then Spell.Shadowburn:Cast(Target) debug("Shadowburn (Power Infusion)") return true end
         
         -- Damage Modifiers
-        if Setting("Shadowburn Modifiers") ~= 1 then
+        --[[if Setting("Shadowburn Modifiers") ~= 1 then
             if Setting("Shadowburn Modifiers") == 2 
             and DamageModifiers > 1 
             and Spell.Shadowburn:Cast(Target) then 
@@ -1110,14 +1110,13 @@ local function Raid_Rotation()
             and Spell.Shadowburn:Cast(Target) then 
                 debug("true dmg mods >3") 
                 return true 
-            end 
+            end --]]
         end
     end
 end
-
+--end 
 
     --if DMW.Player.Equipment[18] and Target.Facing and Wand() then return true end
-end
 
 ------------------------------------------------
 -- OUT OF COMBAT - ROTATION --------------------
