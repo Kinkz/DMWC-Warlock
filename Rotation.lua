@@ -1280,7 +1280,7 @@ local function CorruptionPower()
 end
 
 local function CombatLogEvent(...)
-    local timeStamp, subEvent, _, sourceID, sourceName, _, _, targetID = ...;
+   --[[] local timeStamp, subEvent, _, sourceID, sourceName, _, _, targetID = ...;
 	local destGUID		= select(8, ...)
     local spellID		= select(12, ...)
     
@@ -1336,7 +1336,7 @@ local function CombatLogEvent(...)
        for i=1,#kinkydots do 
         debug("<DOT TRACKER>" .. " | Tracker Power: " .. kinkydots[i].corPower .. " | Current Power: " .. CorruptionPower())
        end 
-    end
+    end--]]
     -- debug("<DOT TRACKER>" .. " | Tracker Power: " .. kinkydots[i].corPower .. " | Current Power: " .. CorruptionPower() .. " | DMG Buffs: " .. dmgBuffs)
 end
 
@@ -1358,9 +1358,6 @@ kinkFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 
 --kinkFrame:SetScript("OnUpdate",Warlock.Rotation())
 
-kinkFrame:SetPropagateKeyboardInput(true)
-kinkFrame:SetScript("OnKeyDown", testKeys);
-
 kinkFrame:SetScript("OnEvent", function(self, event, ...)
 	if(event == "COMBAT_LOG_EVENT_UNFILTERED" ) then
         CombatLogEvent(CombatLogGetCurrentEventInfo());
@@ -1372,11 +1369,11 @@ end)
 --keyboardFrame:EnableKeyboard(true)
 
 kinkFrame:Show()
-	CombatLogEvent(CombatLogGetCurrentEventInfo());
-	if(event == "PLAYER_ENTERING_WORLD") then
-		C_ChatInfo.RegisterAddonMessagePrefix("D4C") -- DBM
-	elseif(event == "ENCOUNTER_START") then
-		ENCOUNTER_START(encounterID, name, difficulty, size)
-	elseif(event == "ENCOUNTER_END") then
-		ENCOUNTER_END(encounterID, name, difficulty, size)
-	end
+CombatLogEvent(CombatLogGetCurrentEventInfo());
+if(event == "PLAYER_ENTERING_WORLD") then
+	C_ChatInfo.RegisterAddonMessagePrefix("D4C") -- DBM
+elseif(event == "ENCOUNTER_START") then
+	ENCOUNTER_START(encounterID, name, difficulty, size)
+elseif(event == "ENCOUNTER_END") then
+	ENCOUNTER_END(encounterID, name, difficulty, size)
+end
