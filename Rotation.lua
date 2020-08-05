@@ -1193,7 +1193,7 @@ local function OoC()
 end
 
 function Warlock.Rotation() 
-    if Setting("Pause Key") == 1 then 
+    --[[if Setting("Pause Key") == 1 then 
         if IsLeftControlKeyDown() then return end
     elseif Setting("Pause Key") == 2 then 
         if IsLeftShiftKeyDown() then return end
@@ -1205,7 +1205,7 @@ function Warlock.Rotation()
         if IsRightShiftKeyDown() then return end
     elseif Setting("Pause Key") == 6 then 
         if IsRightAltKeyDown() then return end
-    end
+    end--]]
 
     ------------------------------------------------
     -- Locals Init ---------------------------------
